@@ -16,9 +16,8 @@ class PIA(nn.Module):
 
     def __init__(self,
                  number_of_signals=8,
-                 D_mean=[1.0, 30.0],             # Midpoints of D and D* ranges
-                 D_delta=[1.1, 30.0],            # Spread to cover 0–2.2 and 0–60
-                 F_range=(0.3, 0.7),             # Physiological range of F
+                 D_mean=[1.5, 30.0],             # Midpoints of D and D* ranges
+                 D_delta=[1.5, 30.0],            # Spread to cover 0–2.2 and 0–60
                  b_values=[0, 5, 50, 100, 200, 500, 800, 1000],
                  hidden_dims: List = None,
                  predictor_depth=1,
@@ -32,7 +31,6 @@ class PIA(nn.Module):
         self.number_of_signals = number_of_signals
         self.register_buffer('D_mean', torch.tensor(D_mean))
         self.register_buffer('D_delta', torch.tensor(D_delta))
-        self.F_range = F_range
         self.b_values = b_values
         self.device = device
         self.relu = nn.ReLU()
@@ -81,7 +79,7 @@ class PIA(nn.Module):
         D = self.D_delta[0] * torch.tanh(self.D_predictor(result)).squeeze(dim=1) + self.D_mean[0]  # [batch]
         D_star = self.D_delta[1] * torch.tanh(self.D_star_predictor(result)).squeeze(dim=1) + self.D_mean[1]  # [batch]
         F = self.F_predictor(result).squeeze(dim=1)
-        F = self.F_range[0] + (self.F_range[1] - self.F_range[0]) * torch.sigmoid(F)
+        F = torch.sigmoid(F)
 
         return D, D_star, F
 
