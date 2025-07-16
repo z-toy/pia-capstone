@@ -94,7 +94,7 @@ class PIA(nn.Module):
             S = (1 - F) * torch.exp(-b * D / 1000) + F * torch.exp(-b * D_star / 1000)
             signal[:, i] = S
 
-        return (1000*signal).to(self.device)
+        return (signal).to(self.device)
     
     def forward(self, x):
         D, D_star, F = self.encode(x)
