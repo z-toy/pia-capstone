@@ -37,8 +37,8 @@ def get_batch_ivim(batch_size=16, noise_sdt=0.1, b_values=[0, 5, 50, 100, 200, 5
     noisy_signal = signal + noise
 
     # Inputs and targets
-    input_tensor = torch.from_numpy(1000 * noisy_signal).float()
-    clean_signal = torch.from_numpy(1000 * signal).float()
+    input_tensor = torch.from_numpy(noisy_signal).float()
+    clean_signal = torch.from_numpy(signal).float()
     
     # Ground truth parameters (optional, not needed for training)
     D_params = torch.from_numpy(np.stack([D, D_star], axis=1)).float()
@@ -77,18 +77,6 @@ def ivim_fit(signals, bvals=[0, 5, 50, 100, 200, 500, 800, 1000]):
 
     return D_vals, D_star_vals, F_vals
 
-def three_compartment_fit(M, D_ep, D_st, D_lu, T2_ep,  T2_st, T2_lu, V_ep, V_st):
-    """
-    
-    Three-compartment fit for Hybrid estimation
-    
-    """
-    b, TE = M
-    S_ep = V_ep*np.exp(-b/1000*D_ep)*np.exp(-TE/T2_ep)
-    S_st = V_st*np.exp(-b/1000*D_st)*np.exp(-TE/T2_st)
-    S_lu =(1 - V_ep - V_st)*np.exp(-b/1000*D_lu)*np.exp(-TE/T2_lu)
-    
-    return 1000*(S_ep + S_st + S_lu)
 
 def ADC_slice(bvalues, slicedata):
     min_adc = 0
