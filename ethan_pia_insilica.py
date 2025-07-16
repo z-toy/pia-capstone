@@ -74,7 +74,7 @@ def main(args):
     D_pia_np = D_pia.detach().cpu().numpy()
     D_star_pia_np = D_star_pia.detach().cpu().numpy()
     F_pia_np = F_pia.detach().cpu().numpy()
-    D_pia_params = np.stack([D_pia_np, D_star_pia_np], axis=1)
+    D_pia_params = np.stack([D_pia_np, D_star_pia_np], axis=1) # TODO: D and D* parameters should not be stacked and their performances should be evaluated separately.
 
     get_scores((D_test.detach().cpu().numpy(), F_test.detach().cpu().numpy()),
                (D_pia_params, F_pia_np))
