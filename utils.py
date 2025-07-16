@@ -21,9 +21,9 @@ def get_batch_ivim(batch_size=16, noise_sdt=0.1, b_values=[0, 5, 50, 100, 200, 5
         b_values = [0, 5, 50, 100, 200, 500, 800, 1000]
 
     # Generate ground truth parameters
-    D = np.random.uniform(0.0, 2.2, batch_size)        # True diffusion
-    D_star = np.random.uniform(0.0, 60.0, batch_size)  # Pseudo-diffusion
-    F = np.random.uniform(0.3, 0.7, batch_size)        # Perfusion fraction
+    D = np.random.uniform(0.0, 2.9, batch_size)        # True diffusion
+    D_star = np.random.uniform(3.0, 60.0, batch_size)  # Pseudo-diffusion
+    F = np.random.uniform(0., 1.0, batch_size)        # Perfusion fraction
 
     signal = np.zeros((batch_size, len(b_values)), dtype=float)
 
