@@ -69,12 +69,12 @@ if __name__ == '__main__':
                         help='Depth of predictor networks')
     parser.add_argument('--batch_size', type=int, default=16,
                         help='Batch size for synthetic IVIM data')
-    parser.add_argument('--num_epochs', type=int, default=500000,
+    parser.add_argument('--num_epochs', type=int, default=100000,
                         help='Number of training epochs')
     parser.add_argument('--lr', type=float, default=1e-4,
                         help='Learning rate for optimizer')
-    parser.add_argument('--noise_sdt', type=float, default=0.0,
-                        help='Std dev of Gaussian noise in training signals')
+    parser.add_argument('--noise_sdt', type=float, default=0.04,
+                        help='Std dev of Rician noise in training signals')
     parser.add_argument('--log_interval', type=int, default=1000,
                         help='Print training loss every N epochs')
     parser.add_argument('--output_dir', type=str, default='./models',

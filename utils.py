@@ -23,7 +23,7 @@ def get_batch_ivim(batch_size=16, noise_sdt=0.1, b_values=[0, 5, 50, 100, 200, 5
     # Generate ground truth parameters
     D = np.random.uniform(0.0, 2.9, batch_size)        # True diffusion
     D_star = np.random.uniform(3.0, 60.0, batch_size)  # Pseudo-diffusion
-    F = np.random.uniform(0., 1.0, batch_size)        # Perfusion fraction
+    F = np.random.uniform(0.0, 1.0, batch_size)        # Perfusion fraction
 
     signal = np.zeros((batch_size, len(b_values)), dtype=float)
 
@@ -33,8 +33,9 @@ def get_batch_ivim(batch_size=16, noise_sdt=0.1, b_values=[0, 5, 50, 100, 200, 5
             Sb = (1 - F[sample]) * np.exp(-b * D[sample] / 1000) + F[sample] * np.exp(-b * D_star[sample] / 1000)
             signal[sample, i] = Sb
 
-    noise = np.random.normal(0, noise_sdt, signal.shape)
-    noisy_signal = signal + noise
+    real = np.random.normal(0, noise_sdt, signal.shape)
+    imag = np.random.normal(0, noise_sdt, signal.shape)
+    noisy_signal = np.abs(signal + real + 1j * imag)
 
     # Inputs and targets
     input_tensor = torch.from_numpy(noisy_signal).float()
@@ -76,21 +77,6 @@ def ivim_fit(signals, bvals=[0, 5, 50, 100, 200, 500, 800, 1000]):
         D_vals[i], D_star_vals[i], F_vals[i] = popt
 
     return D_vals, D_star_vals, F_vals
-
-
-def ADC_slice(bvalues, slicedata):
-    min_adc = 0
-    max_adc = 3.0
-    eps = 1e-7
-    numrows, numcols, numbvalues = slicedata.shape
-    adc_map = np.zeros((numrows, numcols))
-    for row in range(numrows):
-        for col in range(numcols):
-            ydata = np.squeeze(slicedata[row,col,:])
-            adc = np.polyfit(bvalues.flatten()/1000, np.log(ydata + eps), 1)
-            adc = -adc[0]
-            adc_map[row, col] =  max(min(adc, max_adc), min_adc)
-    return adc_map
 
 from scipy.stats import spearmanr
 import numpy as np
@@ -293,41 +279,6 @@ def calculate_ivim_stats(test, pia, NLLS):
 
 import numpy as np
 import torch
-
-# def get_batch_2compartment_ivim(batch_size=16, noise_std=0.1, b_values=[0, 5, 50, 100, 200, 500, 800, 1000]):
-#     """
-#     Generate synthetic signals for 2-compartment IVIM model:
-#     Signal = F * exp(-b * D*) + (1 - F) * exp(-b * D)
-    
-#     No TE dimension.
-    
-#     Returns:
-#         signals: [batch_size, len(b_values)] noisy signals (torch.Tensor)
-#         D: [batch_size, 2] ground truth diffusion params (D, D*)
-#         F: [batch_size] ground truth perfusion fraction
-#         clean_signals: [batch_size, len(b_values)] noiseless signals (torch.Tensor)
-#     """
-    
-#     # Sample parameters within your ranges
-#     D = np.random.uniform(0, 2.2, size=batch_size)       # True diffusion D
-#     D_star = np.random.uniform(0, 60, size=batch_size)   # Pseudo-diffusion D*
-#     F = np.random.uniform(0.3, 0.7, size=batch_size)     # Perfusion fraction F
-    
-#     signals = np.zeros((batch_size, len(b_values)), dtype=np.float32)
-#     for i, b in enumerate(b_values):
-#         signals[:, i] = F * np.exp(-b / 1000 * D_star) + (1 - F) * np.exp(-b / 1000 * D)
-    
-#     # Add Gaussian noise
-#     noise = np.random.normal(0, noise_std, signals.shape)
-#     noisy_signals = signals + noise
-    
-#     # Convert to torch tensors
-#     signals_torch = torch.from_numpy(noisy_signals).float()
-#     D_torch = torch.from_numpy(np.vstack([D, D_star]).T).float()
-#     F_torch = torch.from_numpy(F).float()
-#     clean_signals_torch = torch.from_numpy(signals).float()
-    
-#    return signals_torch, D_torch, F_torch, clean_signals_torch
 
 def set_seed(seed):
     # TODO add mps seed setting

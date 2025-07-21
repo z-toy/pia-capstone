@@ -28,7 +28,7 @@ parser = argparse.ArgumentParser(
 )
 parser.add_argument('--sample_size', type=int, default=2500,
                     help='Sample size for in-silica experiments')
-parser.add_argument('--noise_std', type=float, default=0.02,
+parser.add_argument('--noise_std', type=float, default=0.04,
                     help='Noise standard deviation')
 
 
@@ -62,7 +62,7 @@ def main(args):
     print('Loading trained PIA model...')
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = PIA(predictor_depth=2, device=device).to(device)
-    model.load_state_dict(torch.load('pia.pt', map_location=device))
+    model.load_state_dict(torch.load('./models/pia_model.pt', map_location=device))
     model.eval()
 
     test_tensor = test_tensor.to(device)
@@ -74,7 +74,7 @@ def main(args):
     D_pia_np = D_pia.detach().cpu().numpy()
     D_star_pia_np = D_star_pia.detach().cpu().numpy()
     F_pia_np = F_pia.detach().cpu().numpy()
-    D_pia_params = np.stack([D_pia_np, D_star_pia_np], axis=1) # TODO: D and D* parameters should not be stacked and their performances should be evaluated separately.
+    D_pia_params = np.stack([D_pia_np, D_star_pia_np], axis=1)
 
     get_scores((D_test.detach().cpu().numpy(), F_test.detach().cpu().numpy()),
                (D_pia_params, F_pia_np))
@@ -106,23 +106,24 @@ def main(args):
 
     # Stage 4: Noise robustness
     print('Stage 4: Noise robustness')
-    noise_levels = [2e-4, 5e-4, 7e-4, 1e-3, 2e-3, 5e-3, 7e-3, 1e-2, 2e-2, 5e-2, 7e-2, 1e-1]
+    # noise_levels = [2e-4, 5e-4, 7e-4, 1e-3, 2e-3, 5e-3, 7e-3, 1e-2, 2e-2, 5e-2, 7e-2, 1e-1, 0]
+    noise_levels = [0, 1e-7, 2e-7, 5e-7, 1e-6, 2.5e-6, 5e-6, 1e-5, 5e-5, 1e-4]
     results = {'D': [], 'D*': [], 'F': []}
     B = 100
 
     for sigma in tqdm(noise_levels):
         # generate clean + Rician noise
         _, D_t_true, F_t_true, clean = get_batch_ivim(B, noise_sdt=0)
-        clean_np = clean.detach().cpu().numpy() / 1000
+        clean_np = clean.detach().cpu().numpy()
         real = np.random.normal(0, sigma, clean_np.shape)
         imag = np.random.normal(0, sigma, clean_np.shape)
         noisy = np.abs(clean_np + real + 1j * imag)
 
         # NLLS predictions
-        Dh, Dstar_h, Fh = ivim_fit(noisy * 1000)
+        Dh, Dstar_h, Fh = ivim_fit(noisy)
 
         # PIA predictions
-        inp = 1000 * torch.from_numpy(noisy).float().to(device)
+        inp = torch.from_numpy(noisy).float().to(device)
         Dp, Dstar_p, Fp = model.encode(inp)
         Dp_np = Dp.detach().cpu().numpy()
         Dstar_p_np = Dstar_p.detach().cpu().numpy()
